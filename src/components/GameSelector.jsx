@@ -1,87 +1,115 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { gsap } from 'gsap'
+
 function GameSelector({
   sports,
   selectedSportId,
   selectedTeamId,
   onSelectSport,
   onSelectTeam,
+  routePath,
 }) {
+  const [isSwitcherOpen, setIsSwitcherOpen] = useState(false)
+  const switcherRef = useRef(null)
   const selectedSport = sports.find(sport => sport.id === selectedSportId) ?? sports[0]
+  const selectedTeam = selectedSport.teams.find(team => team.id === selectedTeamId) ?? selectedSport.teams[0]
+  const teamOptions = useMemo(() => selectedSport.teams, [selectedSport])
+
+  useEffect(() => {
+    if (!isSwitcherOpen || !switcherRef.current) return undefined
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        switcherRef.current,
+        { autoAlpha: 0, y: -8, scale: 0.98 },
+        { autoAlpha: 1, y: 0, scale: 1, duration: 0.28, ease: 'power2.out' },
+      )
+    }, switcherRef)
+
+    return () => ctx.revert()
+  }, [isSwitcherOpen])
 
   return (
-    <section className="mb-8 rounded-2xl border border-white/10 bg-white/5 p-5 shadow-xl">
-      <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-200">
-            K-Ville Games
-          </p>
-          <h1 className="text-3xl font-extrabold text-white sm:text-4xl">
-            Pick a sport and school
-          </h1>
+    <section className="mb-6" data-gsap="hero">
+      <div className="rounded-[1.75rem] border border-white/10 bg-[#071f4a]/70 p-5 shadow-2xl shadow-black/20 backdrop-blur sm:p-7">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-xs font-bold uppercase tracking-[0.28em] text-blue-200/90">
+              K-Ville Classic
+            </p>
+            <h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">
+              {selectedTeam.name} {selectedSport.name}
+            </h1>
+            <p className="mt-3 max-w-2xl text-base leading-relaxed text-blue-100/90">
+              A focused roster puzzle for {selectedTeam.nickname} fans. Guess the secret player from clues, history, and a little K-Ville nerve.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-end">
+            <div className="flex gap-2 text-sm font-bold text-blue-100">
+              <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1">
+                {selectedTeam.players.length} players
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1">
+                {selectedSport.shortName}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsSwitcherOpen(isOpen => !isOpen)}
+              className="rounded-full border border-white/15 bg-white px-5 py-2 text-sm font-extrabold text-[#001a57] shadow-lg shadow-black/10 transition hover:-translate-y-0.5 hover:bg-blue-50"
+              aria-expanded={isSwitcherOpen}
+            >
+              {isSwitcherOpen ? 'Close selector' : 'Change game'}
+            </button>
+          </div>
         </div>
-        <p className="max-w-xl text-sm leading-relaxed text-blue-100 sm:text-base">
-          Start with Duke men's basketball today, then drop roster data into each team file as the site grows.
-        </p>
-      </div>
 
-      <div className="mb-5 grid gap-3 md:grid-cols-3">
-        {sports.map(sport => {
-          const isSelected = sport.id === selectedSportId
+        {isSwitcherOpen && (
+          <div
+            ref={switcherRef}
+            className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-white/[0.08] p-4 sm:grid-cols-2"
+          >
+            <label className="flex flex-col gap-2 text-sm font-bold text-blue-100">
+              School
+              <select
+                value={selectedTeamId}
+                onChange={(event) => onSelectTeam(event.target.value)}
+                className="rounded-xl border border-white/10 bg-[#09275a] px-4 py-3 text-base font-semibold text-white outline-none transition focus:border-green-300 focus:ring-2 focus:ring-green-300/30"
+              >
+                {teamOptions.map(team => (
+                  <option key={team.id} value={team.id}>
+                    {team.name} — {team.nickname}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          return (
-            <button
-              key={sport.id}
-              type="button"
-              onClick={() => onSelectSport(sport.id)}
-              className={`rounded-xl border p-4 text-left transition ${
-                isSelected
-                  ? 'border-green-400 bg-green-400/15 shadow-lg shadow-green-900/20'
-                  : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
-              }`}
-            >
-              <div className="text-lg font-bold text-white">{sport.name}</div>
-              <div className="mt-1 text-sm leading-snug text-blue-100">{sport.description}</div>
-            </button>
-          )
-        })}
-      </div>
+            <label className="flex flex-col gap-2 text-sm font-bold text-blue-100">
+              Sport
+              <select
+                value={selectedSportId}
+                onChange={(event) => onSelectSport(event.target.value)}
+                className="rounded-xl border border-white/10 bg-[#09275a] px-4 py-3 text-base font-semibold text-white outline-none transition focus:border-green-300 focus:ring-2 focus:ring-green-300/30"
+              >
+                {sports.map(sport => (
+                  <option key={sport.id} value={sport.id}>
+                    {sport.name}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        {selectedSport.teams.map(team => {
-          const isSelected = team.id === selectedTeamId
-          const isAvailable = team.players.length > 0
-
-          return (
-            <button
-              key={team.id}
-              type="button"
-              onClick={() => onSelectTeam(team.id)}
-              className={`overflow-hidden rounded-xl border text-left transition ${
-                isSelected
-                  ? 'border-green-400 bg-white/15'
-                  : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
-              }`}
-            >
-              <div className={`h-2 bg-gradient-to-r ${team.colors}`} />
-              <div className="p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-xl font-extrabold text-white">{team.name}</div>
-                    <div className="text-sm text-blue-100">{team.nickname}</div>
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${
-                      isAvailable
-                        ? 'bg-green-400/20 text-green-200'
-                        : 'bg-white/10 text-blue-100'
-                    }`}
-                  >
-                    {isAvailable ? `${team.players.length} players` : 'Coming soon'}
-                  </span>
-                </div>
-              </div>
-            </button>
-          )
-        })}
+            <div className="sm:col-span-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-200/70">
+                Shareable route
+              </p>
+              <p className="mt-1 break-all rounded-xl border border-white/10 bg-black/15 px-4 py-3 font-mono text-sm text-blue-100">
+                {routePath}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   )

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>K-Ville</title>
+    <script>
+      const basePath = '/k-ville-app/'
+      const path = window.location.pathname.startsWith(basePath)
+        ? window.location.pathname.slice(basePath.length)
+        : window.location.pathname.replace(/^\/+/, '')
+      const params = new URLSearchParams(window.location.search)
+
+      if (path) params.set('route', `/${path}`)
+
+      window.location.replace(`${basePath}?${params.toString()}${window.location.hash}`)
+    </script>
+  </head>
+  <body>
+    Redirecting to K-Ville...
+  </body>
+</html>

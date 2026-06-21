@@ -25,43 +25,44 @@ function Header({
   }, [guessesRemaining])
 
   return (
-    <div className="flex flex-col md:flex-row justify-between items-center mb-8 pb-5 border-b-2 border-white/10 relative">
-      {/* Menu Trigger */}
-      <div className="z-10">
+    <div className="mb-6 rounded-[1.5rem] border border-white/10 bg-white/[0.06] p-4 shadow-xl shadow-black/10 sm:p-5" data-gsap="gameplay">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <button
+          type="button"
           onClick={() => setShowMenuModal(true)}
-          className="cursor-pointer p-3 text-2xl hover:bg-white/10 rounded-full transition"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/10 text-xl text-white transition hover:bg-white/15"
           aria-label="Open Menu"
         >
           <i className="fa-solid fa-bars-staggered text-white"></i>
         </button>
-      </div>
 
-      {/* Title */}
-      <div className="text-center flex-1">
-        <div className="text-4xl font-bold text-white drop-shadow">K-VILLE</div>
-        <div>
+        <div className="min-w-0 flex-1 text-left md:text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-blue-200/80">
+            Current puzzle
+          </p>
           <a
             href="https://www.instagram.com/kvillegame/"
-            className="text-blue-200 text-lg block hover:text-[#C13584] hover:underline transition duration-200"
+            className="mt-1 block truncate text-2xl font-black text-white transition hover:text-blue-200 sm:text-3xl"
             target="_blank"
             rel="noopener noreferrer"
           >
             {gameTitle}
           </a>
+          <p className="mt-1 text-sm font-medium text-blue-100/80">{gameSubtitle}</p>
         </div>
-        <div className="text-sm font-medium text-blue-100">{gameSubtitle}</div>
-        <div className={`text-white font-medium mt-1 transition-all ${flashGuessCount ? 'animate-flash' : ''}`}>
-          {guessesRemaining} out of 6 Guesses
-        </div>
-      </div>
 
-      {/* Timer */}
-      <div
-        className="flex items-center text-white text-lg p-3 rounded hover:bg-white/10 cursor-pointer transition"
-        onClick={onTimerToggle}
-      >
-        <i className="fa-regular fa-clock mr-2"></i> {timer}
+        <div className="flex items-center gap-3 md:justify-end">
+          <div className={`rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-extrabold text-white transition-all ${flashGuessCount ? 'animate-flash' : ''}`}>
+            {guessesRemaining}/6 guesses
+          </div>
+          <button
+            type="button"
+            className="flex items-center rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-extrabold text-white transition hover:bg-white/15"
+            onClick={onTimerToggle}
+          >
+            <i className="fa-regular fa-clock mr-2"></i> {timer}
+          </button>
+        </div>
       </div>
 
       {/* Modal Menu */}

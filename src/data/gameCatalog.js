@@ -32,18 +32,21 @@ const footballColumns = [
 const teams = {
   duke: {
     id: 'duke',
+    slug: 'duke',
     name: 'Duke',
     nickname: 'Blue Devils',
     colors: 'from-[#001a57] to-[#003d82]',
   },
   ncsu: {
     id: 'ncsu',
+    slug: 'north-carolina-state',
     name: 'NC State',
     nickname: 'Wolfpack',
     colors: 'from-[#CC0000] to-[#7A0000]',
   },
   unc: {
     id: 'unc',
+    slug: 'north-carolina',
     name: 'UNC',
     nickname: 'Tar Heels',
     colors: 'from-[#4B9CD3] to-[#13294B]',
@@ -58,6 +61,7 @@ const withPlayers = (teamId, players) => ({
 export const GAME_CATALOG = [
   {
     id: 'basketball',
+    slug: 'mens-basketball',
     name: "Men's Basketball",
     shortName: 'Basketball',
     description: 'Guess players by era, position, height, and jersey number.',
@@ -70,6 +74,7 @@ export const GAME_CATALOG = [
   },
   {
     id: 'womens_basketball',
+    slug: 'womens-basketball',
     name: "Women's Basketball",
     shortName: "Women's Basketball",
     description: 'The same guessing format for college hoops legends.',
@@ -82,6 +87,7 @@ export const GAME_CATALOG = [
   },
   {
     id: 'football',
+    slug: 'football',
     name: 'Football',
     shortName: 'Football',
     description: 'Guess players by era, unit, position, height, and jersey number.',

@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useLayoutEffect, useRef } from 'react'
+import { gsap } from 'gsap'
 import Header from './components/Header'
 import PlayerInput from './components/PlayerInput'
 import GuessTable from './components/GuessTable'
@@ -10,14 +11,57 @@ import { gameLogic } from './utils/gameLogic'
 import { GAME_CATALOG } from './data/gameCatalog'
 
 const defaultScores = { easy: 0, normal: 0, hard: 0 }
+const defaultSelection = { sportId: 'basketball', teamId: 'duke' }
+
+const getBasePath = () => {
+  const base = import.meta.env.BASE_URL || '/'
+  return base.endsWith('/') ? base : `${base}/`
+}
+
+const findRouteSelection = (teamSlug, sportSlug) => {
+  const sport = GAME_CATALOG.find(game => game.slug === sportSlug)
+  if (!sport) return defaultSelection
+
+  const team = sport.teams.find(candidate => candidate.slug === teamSlug)
+  if (!team) return defaultSelection
+
+  return { sportId: sport.id, teamId: team.id }
+}
+
+const getRouteSelectionFromLocation = () => {
+  if (typeof window === 'undefined') return defaultSelection
+
+  const basePath = getBasePath()
+  const params = new URLSearchParams(window.location.search)
+  const redirectedRoute = params.get('route')
+  const rawPath = redirectedRoute || window.location.pathname
+  const pathWithoutBase = rawPath.startsWith(basePath)
+    ? rawPath.slice(basePath.length)
+    : rawPath.replace(/^\/+/, '')
+  const [teamSlug, sportSlug] = pathWithoutBase.split('/').filter(Boolean)
+
+  if (!teamSlug || !sportSlug) return defaultSelection
+
+  return findRouteSelection(teamSlug, sportSlug)
+}
+
+const getRoutePath = (teamId, sportId) => {
+  const sport = GAME_CATALOG.find(game => game.id === sportId) ?? GAME_CATALOG[0]
+  const team = sport.teams.find(candidate => candidate.id === teamId) ?? sport.teams[0]
+
+  return `${getBasePath()}${team.slug}/${sport.slug}`
+}
 
 function App() {
+  const shellRef = useRef(null)
+  const hasMountedAnimation = useRef(false)
+  const [initialSelection] = useState(() => getRouteSelectionFromLocation())
   const [currentModal, setCurrentModal] = useState(() => {
     const hasSeenModal = localStorage.getItem('hasSeenInfoModal')
     return hasSeenModal ? null : 'info'
   })
-  const [selectedSportId, setSelectedSportId] = useState('basketball')
-  const [selectedTeamId, setSelectedTeamId] = useState('duke')
+  const [selectedSportId, setSelectedSportId] = useState(initialSelection.sportId)
+  const [selectedTeamId, setSelectedTeamId] = useState(initialSelection.teamId)
   const [difficulty, setDifficulty] = useState('easy')
   const [guesses, setGuesses] = useState([])
   const [guessesRemaining, setGuessesRemaining] = useState(6)
@@ -45,7 +89,74 @@ function App() {
   const gameKey = `${selectedSport.id}:${selectedTeam.id}`
   const gameTitle = `${selectedTeam.name} ${selectedSport.shortName}`
   const gameSubtitle = `${selectedTeam.nickname} ${selectedSport.name} Guessing Game`
+  const routePath = getRoutePath(selectedTeam.id, selectedSport.id)
   const teamScores = scores[gameKey] ?? defaultScores
+
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.from('[data-gsap="hero"]', {
+        autoAlpha: 0,
+        y: 20,
+        duration: 0.65,
+        ease: 'power3.out',
+      })
+      gsap.from('[data-gsap="gameplay"]', {
+        autoAlpha: 0,
+        y: 18,
+        duration: 0.6,
+        delay: 0.12,
+        ease: 'power3.out',
+      })
+    }, shellRef)
+
+    return () => ctx.revert()
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!hasMountedAnimation.current) {
+      hasMountedAnimation.current = true
+      return undefined
+    }
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        '[data-gsap="gameplay"]',
+        { autoAlpha: 0.84, y: 10 },
+        { autoAlpha: 1, y: 0, duration: 0.32, ease: 'power2.out' },
+      )
+    }, shellRef)
+
+    return () => ctx.revert()
+  }, [gameKey])
+
+  const updateRoute = useCallback((teamId, sportId, replace = false) => {
+    if (typeof window === 'undefined') return
+
+    const nextPath = getRoutePath(teamId, sportId)
+    if (`${window.location.pathname}${window.location.search}` === nextPath) return
+
+    const method = replace ? 'replaceState' : 'pushState'
+    window.history[method]({}, '', nextPath)
+  }, [])
+
+  useEffect(() => {
+    const basePath = getBasePath()
+    const params = new URLSearchParams(window.location.search)
+    const isRootPath = window.location.pathname === basePath || window.location.pathname === basePath.slice(0, -1)
+    if (params.has('route') || isRootPath) updateRoute(selectedTeam.id, selectedSport.id, true)
+  }, [selectedSport.id, selectedTeam.id, updateRoute])
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const nextSelection = getRouteSelectionFromLocation()
+      setSelectedSportId(nextSelection.sportId)
+      setSelectedTeamId(nextSelection.teamId)
+      setCurrentModal(null)
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
 
   const initializeGame = useCallback(() => {
     if (!hasPlayers) {
@@ -87,6 +198,7 @@ function App() {
     const nextTeam = nextSport.teams.find(team => team.id === selectedTeamId) ?? nextSport.teams[0]
     setSelectedSportId(nextSport.id)
     setSelectedTeamId(nextTeam.id)
+    updateRoute(nextTeam.id, nextSport.id)
     setCurrentModal(null)
   }
 
@@ -94,6 +206,7 @@ function App() {
     if (!selectedSport.teams.some(team => team.id === teamId)) return
 
     setSelectedTeamId(teamId)
+    updateRoute(teamId, selectedSport.id)
     setCurrentModal(null)
   }
 
@@ -251,14 +364,16 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen flex justify-center items-start p-4 sm:p-5 bg-gradient-to-br from-[#001a57] via-[#003d82] to-[#111827] text-white">
-      <div className="w-full max-w-6xl bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-8 shadow-2xl">
+    <div className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#0057b8_0,#003d82_34%,#061a33_72%,#020817_100%)] px-4 py-6 text-white sm:px-6 sm:py-10">
+      <div className="pointer-events-none fixed inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.08),transparent_35%,rgba(0,0,0,0.18))]" />
+      <main ref={shellRef} className="relative mx-auto w-full max-w-5xl rounded-[2rem] border border-white/10 bg-[#061a33]/72 p-4 shadow-2xl shadow-black/30 backdrop-blur sm:p-7">
         <GameSelector
           sports={GAME_CATALOG}
           selectedSportId={selectedSport.id}
           selectedTeamId={selectedTeam.id}
           onSelectSport={handleSportSelect}
           onSelectTeam={handleTeamSelect}
+          routePath={routePath}
         />
 
         {hasPlayers ? (
@@ -313,7 +428,7 @@ function App() {
             {modalContent[currentModal].content}
           </Modal>
         )}
-      </div>
+      </main>
     </div>
   )
 }
