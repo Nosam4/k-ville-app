@@ -419,16 +419,16 @@ function App() {
         )}
 
         <Footer onModalOpen={setCurrentModal} />
-        {currentModal && modalContent[currentModal] && (
-          <Modal
-            isOpen={true}
-            onClose={() => setCurrentModal(null)}
-            title={modalContent[currentModal].title}
-          >
-            {modalContent[currentModal].content}
-          </Modal>
-        )}
       </main>
+      {currentModal && modalContent[currentModal] && (
+        <Modal
+          isOpen={true}
+          onClose={() => setCurrentModal(null)}
+          title={modalContent[currentModal].title}
+        >
+          {modalContent[currentModal].content}
+        </Modal>
+      )}
     </div>
   )
 }
