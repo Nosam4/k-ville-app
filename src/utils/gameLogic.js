@@ -1,8 +1,8 @@
 export const gameLogic = {
-  selectRandomPlayer: (playerData, difficulty) => {
+  getPlayerPool: (playerData, difficulty) => {
     const players = Array.isArray(playerData) ? playerData : []
     let filteredPlayers = players
-    
+
     switch (difficulty) {
       case 'easy':
         filteredPlayers = players.filter(player => Number(player.popularity) >= 8)
@@ -14,9 +14,13 @@ export const gameLogic = {
         filteredPlayers = players
     }
 
-    const playerPool = filteredPlayers.length > 0 ? filteredPlayers : players
+    return filteredPlayers.length > 0 ? filteredPlayers : players
+  },
+
+  selectRandomPlayer: (playerData, difficulty) => {
+    const playerPool = gameLogic.getPlayerPool(playerData, difficulty)
     if (playerPool.length === 0) return null
-    
+
     const randomIndex = Math.floor(Math.random() * playerPool.length)
     return playerPool[randomIndex]
   },

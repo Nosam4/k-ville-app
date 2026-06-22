@@ -8,6 +8,8 @@ function GameSelector({
   onSelectSport,
   onSelectTeam,
   routePath,
+  activePlayerCount = 0,
+  difficultyLabel = 'Easy Mode',
 }) {
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false)
   const switcherRef = useRef(null)
@@ -46,9 +48,12 @@ function GameSelector({
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-end">
-            <div className="flex gap-2 text-sm font-bold text-blue-100">
+            <div className="flex flex-wrap gap-2 text-sm font-bold text-blue-100 sm:justify-end">
+              <span className="rounded-full border border-green-300/30 bg-green-300/15 px-3 py-1 text-green-100">
+                {difficultyLabel}
+              </span>
               <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1">
-                {selectedTeam.players.length} players
+                {activePlayerCount.toLocaleString()} players
               </span>
               <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1">
                 {selectedSport.shortName}

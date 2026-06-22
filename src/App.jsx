@@ -91,6 +91,11 @@ function App() {
   const gameSubtitle = `${selectedTeam.nickname} ${selectedSport.name} Guessing Game`
   const routePath = getRoutePath(selectedTeam.id, selectedSport.id)
   const teamScores = scores[gameKey] ?? defaultScores
+  const activePlayerCount = useMemo(
+    () => gameLogic.getPlayerPool(playerData, difficulty).length,
+    [difficulty, playerData],
+  )
+  const difficultyLabel = `${difficulty.charAt(0).toUpperCase()}${difficulty.slice(1)} Mode`
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -374,6 +379,8 @@ function App() {
           onSelectSport={handleSportSelect}
           onSelectTeam={handleTeamSelect}
           routePath={routePath}
+          activePlayerCount={activePlayerCount}
+          difficultyLabel={difficultyLabel}
         />
 
         {hasPlayers ? (
